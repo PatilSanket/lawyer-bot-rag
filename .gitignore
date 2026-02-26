@@ -10,9 +10,6 @@ __pycache__/
 # Embedding cache (binary, can be large — regenerate locally)
 data/embeddings_cache.pkl
 
-# Legal PDFs (don't commit copyrighted documents)
-data/legal_pdfs/*.pdf
-
 # Jupyter
 .ipynb_checkpoints/
 notebooks/.ipynb_checkpoints/
