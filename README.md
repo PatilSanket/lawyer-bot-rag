@@ -100,14 +100,7 @@ curl http://localhost:8000/health
 
 ## 📚 Supported Acts
 
-- Indian Penal Code, 1860
-- Code of Criminal Procedure, 1973
-- Information Technology Act, 2000
-- Companies Act, 2013
-- Consumer Protection Act, 2019
-- Constitution of India
-- Protection of Women from Domestic Violence Act, 2005
-- Protection of Children from Sexual Offences Act, 2012
+Check in data/legal_pdfs folder
 
 ---
 
