@@ -1,0 +1,25 @@
+# Environment
+.env
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Embedding cache (binary, can be large — regenerate locally)
+data/embeddings_cache.pkl
+
+# Legal PDFs (don't commit copyrighted documents)
+data/legal_pdfs/*.pdf
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/

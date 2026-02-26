@@ -1,0 +1,15 @@
+elasticsearch>=8.0.0
+openai
+langchain
+langchain-elasticsearch
+langchain-openai
+pymupdf
+unstructured
+sentence-transformers
+tiktoken
+python-dotenv
+fastapi
+uvicorn
+tqdm
+rich
+redis

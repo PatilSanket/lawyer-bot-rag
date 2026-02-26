@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: vakilbot-elastic
+    environment:
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=vakilbot123
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false   # plain HTTP for local dev
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -u elastic:vakilbot123 http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\\|yellow\"'"]
+      interval: 15s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: vakilbot-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  es_data:
+  redis_data:
