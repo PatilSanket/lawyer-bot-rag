@@ -3,14 +3,15 @@
 An AI-powered Indian legal advisor chatbot built with **Retrieval-Augmented Generation (RAG)**, **Elasticsearch hybrid search** (BM25 + kNN + RRF), and **GPT-4o**.
 
 ## ✨ Features
-
-- 🔍 **Hybrid Search** — Combines BM25 keyword + dense vector kNN + ELSER sparse retrieval via Elasticsearch RRF
+- 🔍 **Hybrid Search** — Combines BM25 keyword + dense vector kNN + ELSER sparse retrieval via Elasticsearch RRF (This one is paid, so excluded it lol)
 - ⚖️ **Section-Aware Chunking** — Preserves legal document structure during chunking
 - 🤖 **Intent Detection** — Automatically filters by Act and legal domain tags
 - 📡 **Streaming Responses** — Token-by-token streaming via FastAPI
 - 🛡️ **Safety Guardrails** — Harmful query detection + legal disclaimer injection
 - ⚡ **Redis Caching** — Reduces latency and API costs for repeated queries
 - 📊 **Evaluation Suite** — Precision/Recall/MRR + LLM-as-judge scoring
+
+![Architecture](assets/architecture.png)
 
 ## 📁 Project Structure
 
@@ -110,6 +111,7 @@ Check in data/legal_pdfs folder
 
 Sample .env file
 
+```bash
 ###############################################################################
 # LOCAL DEV (docker-compose)
 ###############################################################################
@@ -135,3 +137,5 @@ LLM_MODEL=gemini-2.5-flash
 # ELASTIC_CLOUD_ID=your-cloud-id
 # ELASTIC_API_KEY=your-api-key
 # ELASTIC_URL=                     # not needed when using cloud ID
+```
+
