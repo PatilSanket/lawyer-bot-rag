@@ -1,4 +1,5 @@
-import openai
+from __future__ import annotations
+
 import time
 from typing import Optional
 import logging
@@ -17,18 +18,20 @@ class LegalEmbedder:
         model: str = "text-embedding-3-small",
         batch_size: int = 100,
         use_local: bool = False,
-        local_model: str = "intfloat/multilingual-e5-large"
+        local_model: str = "all-MiniLM-L6-v2"
     ):
         self.model = model
         self.batch_size = batch_size
         self.use_local = use_local
+        # E5 models need instruction prefixes; MiniLM and others do not
+        self._is_e5 = "e5" in local_model.lower()
         
         if use_local:
-            # Use multilingual E5 for better Hindi/regional language support
             from sentence_transformers import SentenceTransformer
             self.local_model = SentenceTransformer(local_model)
             logger.info(f"Loaded local model: {local_model}")
         else:
+            import openai
             self.client = openai.OpenAI()
     
     def _embed_batch_openai(self, texts: list[str]) -> list[list[float]]:
@@ -51,12 +54,14 @@ class LegalEmbedder:
     
     def _embed_batch_local(self, texts: list[str]) -> list[list[float]]:
         """Embed using local sentence-transformer model."""
-        # Prefix for E5 model (instruction-tuned)
-        prefixed = [f"passage: {text}" for text in texts]
+        if self._is_e5:
+            # E5 models require a task prefix for passages
+            texts = [f"passage: {t}" for t in texts]
         embeddings = self.local_model.encode(
-            prefixed,
+            texts,
             normalize_embeddings=True,
-            show_progress_bar=False
+            show_progress_bar=True,   # shows tqdm bar per batch
+            batch_size=32
         )
         return embeddings.tolist()
     
@@ -74,18 +79,19 @@ class LegalEmbedder:
             
             all_embeddings.extend(batch_embeddings)
             
-            # Rate limiting cushion
+            # Rate limiting cushion for OpenAI
             if not self.use_local and i + self.batch_size < len(texts):
                 time.sleep(0.1)
         
         return all_embeddings
     
     def embed_query(self, query: str) -> list[float]:
-        """Embed a single query (uses query prefix for E5 models)."""
+        """Embed a single query."""
         if self.use_local:
-            query_prefixed = f"query: {query}"
+            if self._is_e5:
+                query = f"query: {query}"
             return self.local_model.encode(
-                [query_prefixed],
+                [query],
                 normalize_embeddings=True
             )[0].tolist()
         else:
@@ -94,3 +100,4 @@ class LegalEmbedder:
                 input=[query]
             )
             return response.data[0].embedding
+

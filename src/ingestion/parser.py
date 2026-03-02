@@ -1,4 +1,5 @@
-# src/ingestion/parser.py
+from __future__ import annotations
+
 import fitz  # PyMuPDF
 import re
 from pathlib import Path

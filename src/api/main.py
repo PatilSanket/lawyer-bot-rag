@@ -28,7 +28,11 @@ else:
 
 es = Elasticsearch(**_es_kwargs)
 
-embedder = LegalEmbedder()
+# IMPORTANT: use the SAME model as ingestion — vector spaces must match
+embedder = LegalEmbedder(
+    use_local=True,
+    local_model="all-MiniLM-L6-v2"
+)
 searcher = LegalSearcher(es, os.getenv("INDEX_NAME"), embedder)
 bot = VakilBot(searcher)
 

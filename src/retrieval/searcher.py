@@ -1,4 +1,5 @@
-# src/retrieval/searcher.py
+from __future__ import annotations
+
 from elasticsearch import Elasticsearch
 from typing import Optional
 import os
@@ -87,8 +88,16 @@ class LegalSearcher:
             }
         }
         
-        response = self.es.search(index=self.index_name, body=query_body)
-        
+        response = self.es.search(
+            index=self.index_name,
+            size=k,
+            query=query_body["query"],
+            knn=query_body["knn"],
+            rank=query_body["rank"],
+            source={"excludes": ["content_embedding", "content_sparse"]},
+            highlight=query_body["highlight"]
+        )
+
         return self._format_results(response)
     
     def semantic_only_search(self, query: str, k: int = 5) -> list[dict]:
@@ -97,16 +106,14 @@ class LegalSearcher:
         
         response = self.es.search(
             index=self.index_name,
-            body={
-                "knn": {
-                    "field": "content_embedding",
-                    "query_vector": query_vector,
-                    "k": k,
-                    "num_candidates": k * 10
-                },
-                "size": k,
-                "_source": {"excludes": ["content_embedding"]}
-            }
+            knn={
+                "field": "content_embedding",
+                "query_vector": query_vector,
+                "k": k,
+                "num_candidates": k * 10
+            },
+            size=k,
+            source={"excludes": ["content_embedding"]}
         )
         return self._format_results(response)
     
@@ -114,17 +121,15 @@ class LegalSearcher:
         """Direct lookup by act + section number (exact retrieval)."""
         response = self.es.search(
             index=self.index_name,
-            body={
-                "query": {
-                    "bool": {
-                        "must": [
-                            {"term": {"act_name": act_name}},
-                            {"term": {"section_number": section_number}}
-                        ]
-                    }
-                },
-                "size": 5
-            }
+            query={
+                "bool": {
+                    "must": [
+                        {"term": {"act_name": act_name}},
+                        {"term": {"section_number": section_number}}
+                    ]
+                }
+            },
+            size=5
         )
         
         hits = response["hits"]["hits"]

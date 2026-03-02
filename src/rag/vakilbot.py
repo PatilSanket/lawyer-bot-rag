@@ -1,4 +1,5 @@
-# src/rag/vakilbot.py
+from __future__ import annotations
+
 from openai import OpenAI
 from retrieval.searcher import LegalSearcher
 from typing import Generator, Optional

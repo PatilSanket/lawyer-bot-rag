@@ -1,4 +1,5 @@
-# src/ingestion/chunker.py
+from __future__ import annotations
+
 import tiktoken
 from typing import Generator
 from dataclasses import dataclass, asdict

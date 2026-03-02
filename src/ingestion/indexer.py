@@ -1,4 +1,5 @@
-# src/ingestion/indexer.py
+from __future__ import annotations
+
 from elasticsearch import Elasticsearch, helpers
 from datetime import datetime, timezone
 import os

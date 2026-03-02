@@ -98,7 +98,7 @@ def run_full_ingestion():
             os.getenv("ELASTIC_PASSWORD", "vakilbot123"),
         )
 
-    es = Elasticsearch(**_es_kwargs)
+    es = Elasticsearch(**_es_kwargs, request_timeout=120)
     print("Connected to Elasticsearch:", es.info()["version"]["number"])
 
     index_name = os.getenv("INDEX_NAME", "indian-legal-corpus")
@@ -111,7 +111,7 @@ def run_full_ingestion():
     chunker = LegalChunker(max_tokens=512, overlap_tokens=64)
     embedder = LegalEmbedder(
         use_local=True,
-        local_model="intfloat/multilingual-e5-large"  # ~1.2 GB, downloads once
+        local_model="all-MiniLM-L6-v2"  # fast 22M-param model, 384 dims, no GPU needed
     )
     indexer = LegalIndexer(es, index_name, embedder)
 
@@ -177,7 +177,7 @@ def run_full_ingestion():
             }
         })
 
-    success, errors = helpers.bulk(es, actions, raise_on_error=False, stats_only=False)
+    success, errors = helpers.bulk(es, actions, raise_on_error=False, stats_only=False, chunk_size=200)
     print(f"✅ Indexed {success} chunks" + (f", {len(errors)} errors" if errors else ""))
 
     # Step 7: Verify
