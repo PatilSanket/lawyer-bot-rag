@@ -142,23 +142,31 @@ class VakilBot:
         Full RAG pipeline: retrieve -> augment -> generate.
         """
         
-        # Step 1: Intent detection & query rewriting
+        # Step 1: Intent detection
         intent = self._detect_intent(query)
-        rewritten_query = self._rewrite_query(query)
         
         effective_act_filter = act_filter or intent["act_filter"]
         
         # Step 2: Hybrid retrieval from Elasticsearch
+        # Use the ORIGINAL query for search — query rewriting often distorts results
+        print(f"[VakilBot] Query: {query}", flush=True)
+        print(f"[VakilBot] Act filter: {effective_act_filter}", flush=True)
+        
         results = self.searcher.hybrid_search(
-            query=rewritten_query,
+            query=query,
             k=self.k,
             act_filter=effective_act_filter,
             tag_filter=intent["tag_filter"]
         )
         
-        # Fallback: if filtered search returns nothing, do unfiltered
-        if not results and effective_act_filter:
-            results = self.searcher.hybrid_search(query=rewritten_query, k=self.k)
+        # Fallback: if filtered search returns nothing, try unfiltered
+        if not results and (effective_act_filter or intent["tag_filter"]):
+            print("[VakilBot] Filtered search empty, trying unfiltered...", flush=True)
+            results = self.searcher.hybrid_search(query=query, k=self.k)
+        
+        print(f"[VakilBot] Retrieved {len(results)} results", flush=True)
+        for i, r in enumerate(results[:3]):
+            print(f"  [{i+1}] {r.get('act_name')} S.{r.get('section_number')} — {r.get('section_title')}", flush=True)
         
         # Step 3: Build context
         context = self._build_context(results)
