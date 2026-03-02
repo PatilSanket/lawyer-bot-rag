@@ -105,3 +105,33 @@ Check in data/legal_pdfs folder
 ---
 
 > ⚖️ **Legal Disclaimer**: VakilBot provides general legal information for educational purposes only. It does not constitute legal advice. Always consult a qualified advocate for your specific situation.
+
+
+
+Sample .env file
+
+###############################################################################
+# LOCAL DEV (docker-compose)
+###############################################################################
+# OPENAI_API_KEY=sk-add-your-key  # not needed — using Gemini now
+GEMINI_API_KEY=AI-your-key
+# Elasticsearch — matches docker-compose.yml credentials
+ELASTIC_URL=http://localhost:9200
+ELASTIC_USERNAME=elastic
+ELASTIC_PASSWORD=vakilbot123
+ELASTIC_API_KEY=
+
+# Redis — matches docker-compose.yml
+REDIS_URL=redis://localhost:6379
+
+# App settings
+INDEX_NAME=indian-legal-corpus
+EMBEDDING_MODEL=text-embedding-3-small
+LLM_MODEL=gemini-2.5-flash
+
+###############################################################################
+# CLOUD (Elastic Cloud / production) — uncomment when deploying
+###############################################################################
+# ELASTIC_CLOUD_ID=your-cloud-id
+# ELASTIC_API_KEY=your-api-key
+# ELASTIC_URL=                     # not needed when using cloud ID

@@ -8,7 +8,7 @@ __pycache__/
 .Python
 
 # Embedding cache (binary, can be large — regenerate locally)
-data/embeddings_cache.pkl
+# data/embeddings_cache.pkl
 
 # Jupyter
 .ipynb_checkpoints/

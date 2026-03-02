@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from openai import OpenAI
+from google import genai
+from google.genai import types
 from retrieval.searcher import LegalSearcher
 from typing import Generator, Optional
-import json
+import os
 
 SYSTEM_PROMPT = """You are VakilBot, an expert AI legal assistant specializing in Indian law.
 
@@ -27,43 +28,37 @@ NEVER fabricate legal provisions, penalties, or case citations."""
 class VakilBot:
     """
     Production RAG chain for Indian legal Q&A.
-    Combines Elasticsearch hybrid search with GPT-4 generation.
+    Combines Elasticsearch hybrid search with Gemini generation.
     """
     
     def __init__(
         self,
         searcher: LegalSearcher,
-        llm_model: str = "gpt-4o",
+        llm_model: str = "gemini-2.5-flash",
         k: int = 5,
         rerank: bool = True
     ):
         self.searcher = searcher
-        self.client = OpenAI()
+        self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
         self.llm_model = llm_model
         self.k = k
         self.rerank = rerank
     
     def _rewrite_query(self, query: str) -> str:
         """
-        HyDE (Hypothetical Document Embedding) + Query expansion.
-        Generates a hypothetical legal passage to improve retrieval.
+        Query expansion / rewriting for better retrieval.
+        Uses the same Gemini Flash model (it's free and fast).
         """
-        response = self.client.chat.completions.create(
-            model="gpt-4o-mini",  # cheaper model for rewriting
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a legal query optimizer. Rewrite the user's query to be more effective for searching Indian legal documents. Expand abbreviations, add legal terminology, but keep it concise (max 2 sentences)."
-                },
-                {
-                    "role": "user",
-                    "content": f"Original query: {query}\n\nRewritten query:"
-                }
-            ],
-            max_tokens=150,
-            temperature=0.0
+        response = self.client.models.generate_content(
+            model=self.llm_model,
+            contents=f"Original query: {query}\n\nRewritten query:",
+            config=types.GenerateContentConfig(
+                system_instruction="You are a legal query optimizer. Rewrite the user's query to be more effective for searching Indian legal documents. Expand abbreviations, add legal terminology, but keep it concise (max 2 sentences).",
+                max_output_tokens=150,
+                temperature=0.0
+            )
         )
-        return response.choices[0].message.content.strip()
+        return response.text.strip()
     
     def _detect_intent(self, query: str) -> dict:
         """
@@ -145,11 +140,6 @@ class VakilBot:
     ) -> Generator[str, None, None] | str:
         """
         Full RAG pipeline: retrieve -> augment -> generate.
-        
-        Args:
-            query: User's legal question
-            act_filter: Optional override to restrict to a specific act
-            stream: If True, returns a generator for streaming response
         """
         
         # Step 1: Intent detection & query rewriting
@@ -181,30 +171,27 @@ Legal Context:
 
 Please provide a comprehensive answer based strictly on the above legal context."""
         
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt}
-        ]
-        
         # Step 5: Generate response
         if stream:
-            return self._stream_response(messages, results)
+            return self._stream_response(user_prompt, results)
         else:
-            return self._generate_response(messages, results)
+            return self._generate_response(user_prompt, results)
     
-    def _stream_response(self, messages: list, results: list) -> Generator:
+    def _stream_response(self, user_prompt: str, results: list) -> Generator:
         """Stream the LLM response token by token."""
-        stream = self.client.chat.completions.create(
+        response = self.client.models.generate_content_stream(
             model=self.llm_model,
-            messages=messages,
-            temperature=0.1,  # low temperature for legal accuracy
-            max_tokens=1000,
-            stream=True
+            contents=user_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_PROMPT,
+                temperature=0.1,
+                max_output_tokens=1000
+            )
         )
         
-        for chunk in stream:
-            if chunk.choices[0].delta.content:
-                yield chunk.choices[0].delta.content
+        for chunk in response:
+            if chunk.text:
+                yield chunk.text
         
         # Yield source citations at the end
         yield "\n\n---\n**Sources Retrieved:**\n"
@@ -214,15 +201,18 @@ Please provide a comprehensive answer based strictly on the above legal context.
                 citation += f", Section {result['section_number']}"
             yield f"{i}. {citation}\n"
     
-    def _generate_response(self, messages: list, results: list) -> str:
-        response = self.client.chat.completions.create(
+    def _generate_response(self, user_prompt: str, results: list) -> str:
+        response = self.client.models.generate_content(
             model=self.llm_model,
-            messages=messages,
-            temperature=0.1,
-            max_tokens=1000
+            contents=user_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_PROMPT,
+                temperature=0.1,
+                max_output_tokens=1000
+            )
         )
         
-        answer = response.choices[0].message.content
+        answer = response.text
         
         # Append sources
         sources = "\n\n---\n**Sources Retrieved:**\n"

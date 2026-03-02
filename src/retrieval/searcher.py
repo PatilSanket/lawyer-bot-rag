@@ -93,7 +93,6 @@ class LegalSearcher:
             size=k,
             query=query_body["query"],
             knn=query_body["knn"],
-            rank=query_body["rank"],
             source={"excludes": ["content_embedding", "content_sparse"]},
             highlight=query_body["highlight"]
         )
